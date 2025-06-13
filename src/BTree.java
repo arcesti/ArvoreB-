@@ -32,7 +32,47 @@ public class BTree {
         else
             if(folha instanceof NoFolha)
                 raizNaoFolha(pai, folha);
+            else
+                paiInternoFolhaInterna(pai, folha);
 
+    }
+
+    // split quando pai != folha e o pai é NoInterno e a folha é NoInterno
+    public void paiInternoFolhaInterna(No pai, No folha) {
+        NoInterno caixa1 = new NoInterno();
+        NoInterno caixa2 = new NoInterno();
+        int pos, i = 0, qtdCx = (int) Math.ceil(No.n / 2.0) - 1;
+
+        for (; i < qtdCx; i++) {
+            caixa1.setvInfo(folha.getvInfo(i), i);
+            caixa1.setvPos(folha.getvPos(i), i);
+            caixa1.setvLig(i, ((NoInterno) folha).getvLig(i));
+            caixa1.setTL(caixa1.getTL() + 1);
+        }
+        caixa1.setvLig(i, ((NoInterno) folha).getvLig(i));
+
+        pos = pai.buscarPos(folha.getvInfo(i));
+        ((NoInterno) pai).remanejar(pos);
+        pai.setvInfo(folha.getvInfo(i), pos);
+        pai.setvPos(folha.getvPos(i), pos);
+        pai.setTL(pai.getTL() + 1);
+        i++;
+        int j = 0;
+        for (; i < folha.getTL(); i++, j++) {
+            caixa2.setvInfo(folha.getvInfo(i), j);
+            caixa2.setvPos(folha.getvPos(i), j);
+            caixa2.setvLig(j, ((NoInterno) folha).getvLig(i));
+            caixa2.setTL(caixa2.getTL() + 1);
+        }
+        caixa2.setvLig(j, ((NoInterno) folha).getvLig(i));
+        ((NoInterno) pai).setvLig(pos, caixa1);
+        ((NoInterno) pai).setvLig(pos + 1, caixa2);
+
+        if (pai.getTL() == No.n) {
+            folha = pai;
+            pai = buscarPai(folha, folha.getvInfo(0));
+            split(pai, folha);
+        }
     }
 
     // split de quando a raiz é nó interno
@@ -106,8 +146,15 @@ public class BTree {
             ((NoFolha) aux).setProx(caixa1);
         }
 
+        if (pos == 0 && pai != raiz) {
+            No irmaoEsqPai = buscarIrmaoEsqPai(pai);
+            if (irmaoEsqPai != null) {
+//                int posPaiDoPai = paiDoPai.buscarPos(pai.getvInfo(0));
+            }
+        }
+
         if(pos + 2 <= pai.getTL()) {
-            No aux = ((NoInterno) ((NoInterno) pai).getvLig(pos + 2));
+            No aux = (((NoInterno) pai).getvLig(pos + 2));
             caixa2.setProx(aux);
             ((NoFolha) aux).setAnt(caixa2);
         }
@@ -138,8 +185,6 @@ public class BTree {
             caixa2.setTL(caixa2.getTL() + 1);
         }
 
-
-
         caixa1.setProx(caixa2);
         caixa2.setAnt(caixa1);
 
@@ -149,6 +194,15 @@ public class BTree {
         novo.setvLig(1, caixa2);
         novo.setTL(1);
         raiz = novo;
+    }
+
+    public No buscarIrmaoEsqPai(No pai) {
+        No paiDoPai = buscarPai(pai, pai.getvInfo(0));
+        No paiAnt = pai;
+        while (paiDoPai != raiz && ((NoInterno) paiDoPai).getvLig(0) == paiAnt) {
+
+        }
+        return null;
     }
 
     public No buscarPai(No folha, int info) {
