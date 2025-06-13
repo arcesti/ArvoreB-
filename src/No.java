@@ -18,10 +18,16 @@ public class No {
     }
 
     public void remanejar(int pos) {
-        for (int i = TL; i > pos ; i++) {
+        for (int i = TL; i > pos ; i--) {
             vInfo[i] = vInfo[i - 1];
             vPos[i] = vPos[i - 1];
         }
+    }
+
+    public int buscarPos(int info) {
+        int i;
+        for (i = 0; i < TL && info > vInfo[i]; i++);
+        return i;
     }
 
     public int getvInfo(int pos) {

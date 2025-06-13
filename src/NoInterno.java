@@ -14,8 +14,16 @@ public class NoInterno extends No {
     @Override
     public void remanejar(int pos) {
         super.remanejar(pos);
-        for (int i = super.getTL() + 1; i < pos; i++) {
+        for (int i = super.getTL() + 1; i > pos; i--) {
             vLig[i] = vLig[i - 1];
         }
+    }
+
+    public No getvLig(int pos) {
+        return vLig[pos];
+    }
+
+    public void setvLig(int pos, No vLig) {
+        this.vLig[pos] = vLig;
     }
 }
