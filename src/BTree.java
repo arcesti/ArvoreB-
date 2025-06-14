@@ -124,6 +124,15 @@ public class BTree {
             else {
                 // redistribuir com irma da esquerda
                 if (irmaE != null && irmaE.getTL() > qtdMin) {
+                    ((NoInterno) folha).remanejar(0);
+                    folha.setvInfo(pai.getvInfo(posPai - 1), 0);
+                    folha.setvPos(pai.getvInfo(posPai - 1), 0);
+                    ((NoInterno) folha).setvLig(0, ((NoInterno) irmaE).getvLig(irmaE.getTL()));
+                    folha.setTL(folha.getTL() + 1);
+                    pai.setvInfo(irmaE.getvInfo(irmaE.getTL() - 1), posPai - 1);
+                    pai.setvPos(irmaE.getvPos(irmaE.getTL() - 1), posPai - 1);
+                    irmaE.remanejarExclusao(irmaE.getTL() );
+                    irmaE.setTL(irmaE.getTL() - 1);
 
                 }
                 else {
@@ -138,6 +147,12 @@ public class BTree {
                 }
             }
         }
+        if(pai.getTL() < qtdMin && pai != raiz)
+            redistribuirConcatenar(pai);
+        else
+            if(pai == raiz && pai.getTL() == 0)
+                raiz = folha;
+
     }
 
 

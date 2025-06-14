@@ -34,9 +34,14 @@ public class Main {
         nova.inserir(13,13);
         nova.inserir(14,14);
         nova.exibeFolha();
-        nova.excluir(8);
+        nova.inserir(0, 15);
+        nova.inserir(-1, 16);
+        nova.inserir(-2, 17);
         System.out.println();
+        nova.excluir(8);
         nova.exibeFolha();
+        System.out.println("\n-------");
+        nova.exibir();
 
     }
 }
