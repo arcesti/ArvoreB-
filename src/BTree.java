@@ -3,6 +3,144 @@ public class BTree {
 
 
 
+    public void excluir (int info) {
+        No folha = buscarFolhaExclusao(info), pai;
+        int pos;
+        if (raiz == folha) {
+            pos = raiz.buscarPos(info);
+            raiz.remanejarExclusao(pos);
+            raiz.setTL(raiz.getTL() - 1);
+            if (raiz.getTL() == 0)
+                raiz = null;
+        }
+        else {
+            pos = folha.buscarPos(info);
+            pai = buscarPai(folha, info);
+            // é a primeira info da folha: pos==0(exclui primeira info da folha) | pai.getvLig(0) != folha (primeira info da folha esta no pai, entao tenho que substituir)
+            if (pos == 0 && ((NoInterno) pai).getvLig(0) != folha) {
+                folha.remanejarExclusao(pos);
+                folha.setTL(folha.getTL() - 1);
+                int posPai = pai.buscarPos(info);
+                pai.setvInfo(folha.getvInfo(0), posPai);
+            }
+            else {
+                folha.remanejarExclusao(pos);
+                folha.setTL(folha.getTL() - 1);
+                if (pos == 0) {
+                    removerInfoNoInterno(info, folha.getvInfo(pos));
+                }
+            }
+            int qtdMin = (int) Math.ceil(No.n/2.0) - 1;
+            if (folha.getTL() < qtdMin && folha != raiz) {
+                redistribuirConcatenar(folha);
+            }
+        }
+    }
+
+    public void removerInfoNoInterno(int infoAnt, int infoNova) {
+        No aux = raiz;
+        int pos = aux.buscarPos(infoAnt);
+        while (aux.getvInfo(pos) != infoAnt) {
+            aux = ((NoInterno) aux).getvLig(pos);
+            pos = aux.buscarPos(infoAnt);
+        }
+        aux.setvInfo(infoNova, pos);
+    }
+
+    public void redistribuirConcatenar(No folha) {
+        No pai = buscarPai(folha, folha.getvInfo(0)), irmaE, irmaD;
+        int pos, posPai = pai.buscarPosExclusao(folha.getvInfo(0));
+        if (posPai > 0)
+            irmaE = ((NoInterno) pai).getvLig(posPai - 1);
+        else
+            irmaE = null;
+        if (posPai < pai.getTL())
+            irmaD = ((NoInterno) pai).getvLig(posPai + 1);
+        else
+            irmaD = null;
+
+        int qtdMin = (int) Math.ceil(No.n / 2.0) - 1;
+
+        if (folha instanceof NoFolha) {
+            // redistribuir folha com irmã da direita
+            if (irmaD != null && irmaD.getTL() > qtdMin) {
+                pos = pai.buscarPos(irmaD.getvInfo(1));
+                folha.setvInfo(pai.getvInfo(posPai), folha.getTL());
+                folha.setvPos(pai.getvPos(posPai), folha.getTL());
+                folha.setTL(folha.getTL() + 1);
+                pai.setvInfo(irmaD.getvInfo(1), posPai);
+                pai.setvPos(irmaD.getvPos(1), posPai);
+                irmaD.remanejarExclusao(0);
+                irmaD.setTL(irmaD.getTL() - 1);
+            } else {
+                // redistribuir com a irmã da esquerda
+                if (irmaE != null && irmaE.getTL() > qtdMin) {
+                    folha.remanejar(0);
+                    folha.setvInfo(irmaE.getvInfo(irmaE.getTL() - 1), 0);
+                    folha.setvPos(irmaE.getvPos(irmaE.getTL() - 1), 0);
+                    folha.setTL(folha.getTL() + 1);
+                    pai.setvInfo(irmaE.getvInfo(irmaE.getTL() - 1), posPai - 1);
+                    pai.setvPos(irmaE.getvPos(irmaE.getTL() - 1), posPai - 1);
+                    irmaE.remanejarExclusao(irmaE.getTL() - 1);
+                    irmaE.setTL(irmaE.getTL() - 1);
+                } else {
+                    // concatenação com a irmã da direita
+                    if (irmaD != null) {
+                        int j = folha.getTL();
+                        for (int i = 0; i < irmaD.getTL(); i++, j++) {
+                            folha.setvInfo(irmaD.getvInfo(i), j);
+                            folha.setvPos(irmaD.getvPos(i), j);
+                            folha.setTL(folha.getTL() + 1);
+                        }
+                        ((NoInterno) pai).remanejarExclusao(posPai);
+                        pai.setTL(pai.getTL() - 1);
+                        ((NoInterno) pai).setvLig(posPai, folha);
+                        No aux = ((NoFolha) irmaD).getProx();
+                        ((NoFolha) folha).setProx(aux);
+                        ((NoFolha) aux).setAnt(folha);
+                    }
+                    // concatenação com a irmã da esquerda
+                    else {
+                        int j = irmaE.getTL();
+                        for (int i = 0; i < folha.getTL(); i++) {
+                            irmaE.setvInfo(folha.getvInfo(i), j);
+                            irmaE.setvPos(folha.getvPos(i), j);
+                            irmaE.setTL(irmaE.getTL() + 1);
+                        }
+                        ((NoInterno) pai).remanejarExclusao(posPai);
+                        pai.setTL(pai.getTL() - 1);
+                        ((NoFolha) irmaE).setProx(((NoFolha) folha).getProx());
+                        //No aux = ((NoFolha) )
+                    }
+                }
+            }
+        }
+        // Redistribuir e concatenar com NoInterno
+        else {
+            // redistribuir com irma da direita
+            if (irmaD != null && irmaD.getTL() > qtdMin) {
+
+            }
+            else {
+                // redistribuir com irma da esquerda
+                if (irmaE != null && irmaE.getTL() > qtdMin) {
+
+                }
+                else {
+                    // concatenar com irma da direita
+                    if (irmaD != null) {
+
+                    }
+                    // concatenar com irma da esquerda
+                    else {
+
+                    }
+                }
+            }
+        }
+    }
+
+
     public void inserir(int info, int posArq) {
         if (raiz == null) {
             raiz = new NoFolha(info, 0);
@@ -140,26 +278,20 @@ public class BTree {
         ((NoInterno) pai).setvLig(pos + 1, caixa2);
 
         // ligação dos nós folhas
-        if (pos-1 >= 0) {
-            No aux = ((NoInterno) pai).getvLig(pos - 1);
-            caixa1.setAnt(aux);
+
+        No aux = ((NoFolha) folha).getAnt();
+        if (aux!=null) {
             ((NoFolha) aux).setProx(caixa1);
+            caixa1.setAnt(aux);
         }
 
-        if (pos == 0 && pai != raiz) {
-            No irmaoEsqPai = buscarIrmaoEsqPai(pai);
-            if (irmaoEsqPai != null) {
-//                int posPaiDoPai = paiDoPai.buscarPos(pai.getvInfo(0));
-            }
-        }
-
-        if(pos + 2 <= pai.getTL()) {
-            No aux = (((NoInterno) pai).getvLig(pos + 2));
-            caixa2.setProx(aux);
+        aux = ((NoFolha) folha).getProx();
+        if(aux!=null) {
             ((NoFolha) aux).setAnt(caixa2);
+            caixa2.setProx(aux);
         }
 
-        if (pai.getTL() == 5){
+        if (pai.getTL() == No.n){
             folha = pai;
             pai = buscarPai(folha, folha.getvInfo(0));
             split(pai, folha);
@@ -196,25 +328,28 @@ public class BTree {
         raiz = novo;
     }
 
-    public No buscarIrmaoEsqPai(No pai) {
-        No paiDoPai = buscarPai(pai, pai.getvInfo(0));
-        No paiAnt = pai;
-        while (paiDoPai != raiz && ((NoInterno) paiDoPai).getvLig(0) == paiAnt) {
-
-        }
-        return null;
-    }
 
     public No buscarPai(No folha, int info) {
         No aux, pai;
         aux = pai = raiz;
         while (aux != null && aux != folha) {
             pai = aux;
-            int pos = aux.buscarPos(info);
+            int pos = aux.buscarPosExclusao(info);
             if (aux instanceof NoInterno)
                 aux = ((NoInterno) aux).getvLig(pos);
         }
         return pai;
+    }
+
+    public No buscarFolhaExclusao(int info) {
+        No aux = raiz;
+        int pos;
+        while (!(aux instanceof NoFolha)) {
+            pos = aux.buscarPosExclusao(info);
+            if (aux instanceof NoInterno)
+                aux = ((NoInterno) aux).getvLig(pos);
+        }
+        return aux;
     }
 
     public No buscarFolha(int info) {
@@ -260,7 +395,7 @@ public class BTree {
                 System.out.print(aux.getvInfo(i) + " ");
             }
             aux = ((NoFolha) aux).getProx();
-            System.out.print(" | ");
+            System.out.print(" |  ");
         }
     }
 }

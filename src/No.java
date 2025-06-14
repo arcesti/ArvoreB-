@@ -24,6 +24,19 @@ public class No {
         }
     }
 
+    public void remanejarExclusao (int pos) {
+        for (int i = pos; i < TL - 1; i++) {
+            vInfo[i] = vInfo[i + 1];
+            vPos[i] = vPos[i + 1];
+        }
+    }
+
+    public int buscarPosExclusao(int info) {
+        int i;
+        for (i = 0; i < TL && info >= vInfo[i]; i++);
+        return i;
+    }
+
     public int buscarPos(int info) {
         int i;
         for (i = 0; i < TL && info > vInfo[i]; i++);
