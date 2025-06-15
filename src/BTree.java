@@ -40,11 +40,12 @@ public class BTree {
     public void removerInfoNoInterno(int infoAnt, int infoNova) {
         No aux = raiz;
         int pos = aux.buscarPos(infoAnt);
-        while (aux.getvInfo(pos) != infoAnt) {
+        while (aux.getvInfo(pos) != infoAnt && !(aux instanceof NoFolha) ) {
             aux = ((NoInterno) aux).getvLig(pos);
             pos = aux.buscarPos(infoAnt);
         }
-        aux.setvInfo(infoNova, pos);
+        if(!(aux instanceof NoFolha))
+            aux.setvInfo(infoNova, pos);
     }
 
     public void redistribuirConcatenar(No folha) {
@@ -95,9 +96,17 @@ public class BTree {
                         ((NoInterno) pai).remanejarExclusao(posPai);
                         pai.setTL(pai.getTL() - 1);
                         ((NoInterno) pai).setvLig(posPai, folha);
-                        No aux = ((NoFolha) irmaD).getProx();
-                        ((NoFolha) folha).setProx(aux);
-                        ((NoFolha) aux).setAnt(folha);
+                        No aux;
+                        if (((NoFolha) irmaD).getProx() != null) {
+                            aux = ((NoFolha) irmaD).getProx();
+                            ((NoFolha) folha).setProx(aux);
+                            ((NoFolha) aux).setAnt(folha);
+                        }
+                        else
+                            ((NoFolha) folha).setProx(null);
+                        if (pai.getTL() == 0) {
+                            ((NoFolha) folha).setProx(null);
+                        }
                     }
                     // concatenação com a irmã da esquerda
                     else {
@@ -109,8 +118,11 @@ public class BTree {
                         }
                         ((NoInterno) pai).remanejarExclusao(posPai);
                         pai.setTL(pai.getTL() - 1);
-                        ((NoFolha) irmaE).setProx(((NoFolha) folha).getProx());
-                        //No aux = ((NoFolha) )
+                        if (((NoFolha) folha).getProx()!=null)
+                            ((NoFolha) irmaE).setProx(((NoFolha) folha).getProx());
+                        if (pai.getTL() == 0) {
+                            ((NoFolha) irmaE).setAnt(null);
+                        }
                     }
                 }
             }
@@ -119,7 +131,14 @@ public class BTree {
         else {
             // redistribuir com irma da direita
             if (irmaD != null && irmaD.getTL() > qtdMin) {
-
+                folha.setvInfo(pai.getvInfo(posPai), folha.getTL());
+                folha.setvPos(pai.getvPos(posPai), folha.getTL());
+                folha.setTL(folha.getTL() + 1);
+                ((NoInterno) folha).setvLig(folha.getTL(), ((NoInterno) irmaD).getvLig(0));
+                pai.setvInfo(irmaD.getvInfo(0), posPai);
+                pai.setvPos(irmaD.getvPos(0), posPai);
+                irmaD.remanejarExclusao(0);
+                irmaD.setTL(irmaD.getTL() - 1);
             }
             else {
                 // redistribuir com irma da esquerda
@@ -133,16 +152,54 @@ public class BTree {
                     pai.setvPos(irmaE.getvPos(irmaE.getTL() - 1), posPai - 1);
                     irmaE.remanejarExclusao(irmaE.getTL() );
                     irmaE.setTL(irmaE.getTL() - 1);
-
                 }
                 else {
                     // concatenar com irma da direita
                     if (irmaD != null) {
-
+                        folha.setvInfo(pai.getvInfo(posPai), folha.getTL());
+                        folha.setvPos(pai.getvPos(posPai), folha.getTL());
+                        folha.setTL(folha.getTL() + 1);
+                        int i = folha.getTL();
+                        int j = 0;
+                        for (; j < irmaD.getTL(); i++, j++) {
+                            ((NoInterno) folha).setvLig(i, ((NoInterno) irmaD).getvLig(j));
+                            folha.setvInfo(irmaD.getvInfo(j), i);
+                            folha.setvPos(irmaD.getvPos(j), i);
+                            folha.setTL(folha.getTL() + 1);
+                        }
+                        ((NoInterno) folha).setvLig(i, ((NoInterno) irmaD).getvLig(j));
+                        pai.remanejarExclusao(posPai);
+                        pai.setTL(pai.getTL() - 1);
+                        if (pai.getTL() == 0) {
+                            raiz = folha;
+                            pai = raiz;
+                        }
+                        else
+                            ((NoInterno) pai).setvLig(posPai, folha);
                     }
                     // concatenar com irma da esquerda
                     else {
-
+                        posPai = posPai - 1;
+                        irmaE.setvInfo(pai.getvInfo(posPai), irmaE.getTL());
+                        irmaE.setvPos(pai.getvPos(posPai), irmaE.getTL());
+                        irmaE.setTL(irmaE.getTL() + 1);
+                        int i = irmaE.getTL();
+                        int j = 0;
+                        for (; j < folha.getTL(); i++, j++) {
+                            ((NoInterno) irmaE).setvLig(i, ((NoInterno) folha).getvLig(j));
+                            irmaE.setvInfo(folha.getvInfo(j), i);
+                            irmaE.setvPos(folha.getvPos(j), i);
+                            irmaE.setTL(irmaE.getTL() + 1);
+                        }
+                        ((NoInterno) irmaE).setvLig(i, ((NoInterno) folha).getvLig(j));
+                        pai.remanejarExclusao(posPai);
+                        pai.setTL(pai.getTL() - 1);
+                        if (pai.getTL() == 0) {
+                            raiz = irmaE;
+                            pai = raiz;
+                        }
+                        else
+                            ((NoInterno) pai).setvLig(posPai, irmaE);
                     }
                 }
             }
@@ -150,8 +207,11 @@ public class BTree {
         if(pai.getTL() < qtdMin && pai != raiz)
             redistribuirConcatenar(pai);
         else
-            if(pai == raiz && pai.getTL() == 0)
+            if(pai == raiz && pai.getTL() == 0) {
                 raiz = folha;
+                ((NoFolha) raiz).setProx(null);
+                ((NoFolha) raiz).setAnt(null);
+            }
 
     }
 
@@ -359,7 +419,7 @@ public class BTree {
     public No buscarFolhaExclusao(int info) {
         No aux = raiz;
         int pos;
-        while (!(aux instanceof NoFolha)) {
+        while (!(aux instanceof NoFolha) && aux != null) {
             pos = aux.buscarPosExclusao(info);
             if (aux instanceof NoInterno)
                 aux = ((NoInterno) aux).getvLig(pos);
@@ -396,21 +456,29 @@ public class BTree {
     
     public void exibir() {
         No aux = raiz;
-        exibeInOrdem(aux);
+        if(aux!=null)
+            exibeInOrdem(aux);
+        else
+            System.out.println("\n Não há itens pra serem exibidos!");
     }
 
     public void exibeFolha() {
-        No aux = raiz;
+        if (raiz!= null) {
+            No aux = raiz;
 
-        while(!(aux instanceof NoFolha))
-            aux = ((NoInterno) aux).getvLig(0);
+            while (!(aux instanceof NoFolha))
+                aux = ((NoInterno) aux).getvLig(0);
 
-        while (aux != null) {
-            for (int i = 0; i < aux.getTL(); i++) {
-                System.out.print(aux.getvInfo(i) + " ");
+            while (aux != null) {
+                for (int i = 0; i < aux.getTL(); i++) {
+                    System.out.print(aux.getvInfo(i) + " ");
+                }
+                aux = ((NoFolha) aux).getProx();
+                System.out.print(" |  ");
             }
-            aux = ((NoFolha) aux).getProx();
-            System.out.print(" |  ");
+        }
+        else {
+            System.out.println("\n Não há itens para serem exibidos!");
         }
     }
 }
